@@ -68,6 +68,11 @@ export interface MapData {
 // Player / Game state
 // ============================================================
 
+export interface PlayerInfo {
+  id: string;
+  name: string;
+}
+
 export interface PlayerState {
   id: string;
   name: string;
@@ -102,12 +107,19 @@ export interface GameState {
 }
 
 // ============================================================
-// Choice
+// Choice / Ranking
 // ============================================================
 
 export interface Choice {
   id: string;
-  text: string;
+  label: string;
+}
+
+export interface RankingEntry {
+  player_id: string;
+  player_name: string;
+  total_assets: number;
+  rank: number;
 }
 
 // ============================================================
@@ -129,28 +141,14 @@ export type ClientMessage =
 // ============================================================
 
 export type ServerMessage =
-  | { type: "RoomCreated"; room_id: string; invite_url: string }
-  | { type: "PlayerJoined"; player: PlayerState }
+  | { type: "RoomCreated"; room_id: string; invite_url: string; player_id: string }
+  | { type: "PlayerJoined"; player_id: string; player_name: string }
   | { type: "PlayerLeft"; player_id: string }
-  | {
-      type: "GameStarted";
-      board: MapData;
-      players: PlayerState[];
-      turn_order: string[];
-    }
+  | { type: "GameStarted"; turn_order: string[] }
   | { type: "RouletteResult"; player_id: string; value: number }
-  | {
-      type: "PlayerMoved";
-      player_id: string;
-      position: number;
-      event: TileEvent | null;
-    }
-  | {
-      type: "EventResult";
-      player_id: string;
-      changes: Partial<PlayerState>;
-    }
+  | { type: "PlayerMoved"; player_id: string; position: number }
   | { type: "ChoiceRequired"; choices: Choice[] }
-  | { type: "GameEnded"; rankings: PlayerState[] }
-  | { type: "ChatBroadcast"; player_id: string; text: string }
-  | { type: "Error"; code: number; message: string };
+  | { type: "GameEnded"; rankings: RankingEntry[] }
+  | { type: "ChatBroadcast"; player_id: string; player_name: string; text: string }
+  | { type: "Error"; code: string; message: string }
+  | { type: "RoomState"; room_id: string; players: PlayerInfo[]; status: string };

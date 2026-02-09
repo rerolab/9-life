@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGameState } from "./hooks/useGameState";
 import type { ClientMessage } from "./types/protocol";
 import Lobby from "./components/Lobby";
-import Board from "./components/Board";
 import Roulette from "./components/Roulette";
-import PlayerInfo from "./components/PlayerInfo";
 import Chat from "./components/Chat";
 import EventDialog from "./components/EventDialog";
 
@@ -18,26 +16,16 @@ const DEFAULT_WS_URL =
 export default function App() {
   const { status, connect, sendMessage, onMessage } = useWebSocket();
   const { state, handleServerMessage, reset } = useGameState();
-  const [myPlayerId, setMyPlayerId] = useState<string | null>(null);
-  const [wsUrl, setWsUrl] = useState(DEFAULT_WS_URL);
 
-  // Register message handler
   useEffect(() => {
     onMessage((msg) => {
       handleServerMessage(msg);
-
-      // Track own player id from RoomCreated or first PlayerJoined
-      if (msg.type === "PlayerJoined" && myPlayerId === null) {
-        setMyPlayerId(msg.player.id);
-      }
     });
-  }, [onMessage, handleServerMessage, myPlayerId]);
+  }, [onMessage, handleServerMessage]);
 
   const handleSend = (msg: ClientMessage) => {
     if (status !== "connected") {
-      // Auto-connect on first action
-      connect(wsUrl);
-      // Queue the message after connect
+      connect(DEFAULT_WS_URL);
       const interval = setInterval(() => {
         sendMessage(msg);
         clearInterval(interval);
@@ -47,26 +35,22 @@ export default function App() {
     sendMessage(msg);
   };
 
-  const isHost = state.players.length > 0 && state.players[0]?.id === myPlayerId;
+  const isHost = state.players.length > 0 && state.players[0]?.id === state.myPlayerId;
   const currentPlayerId =
     state.turnOrder.length > 0
       ? state.turnOrder[state.currentTurn % state.turnOrder.length]
       : null;
-  const isMyTurn = currentPlayerId === myPlayerId;
+  const isMyTurn = currentPlayerId === state.myPlayerId;
 
   // Not in game yet - show lobby
   if (!state.gameStarted) {
     return (
       <div className="app">
         <div className="connection-bar">
-          <input
-            value={wsUrl}
-            onChange={(e) => setWsUrl(e.target.value)}
-            placeholder="WebSocket URL"
-          />
+          <span>{DEFAULT_WS_URL}</span>
           <button
             onClick={() =>
-              status === "connected" ? reset() : connect(wsUrl)
+              status === "connected" ? reset() : connect(DEFAULT_WS_URL)
             }
           >
             {status === "connected"
@@ -98,8 +82,6 @@ export default function App() {
 
       <div className="game-layout">
         <div className="game-main">
-          {state.board && <Board board={state.board} players={state.players} />}
-
           <Roulette
             spinning={state.phase === "Spinning"}
             result={state.rouletteValue}
@@ -110,18 +92,21 @@ export default function App() {
 
         <div className="game-sidebar">
           <div className="players-panel">
-            {state.players.map((p) => (
-              <PlayerInfo
-                key={p.id}
-                player={p}
-                isCurrent={p.id === currentPlayerId}
-              />
-            ))}
+            <h3>プレイヤー</h3>
+            <ul>
+              {state.players.map((p) => (
+                <li
+                  key={p.id}
+                  className={p.id === currentPlayerId ? "current-player" : ""}
+                >
+                  {p.name}{p.id === currentPlayerId ? " (手番)" : ""}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <Chat
             log={state.chatLog}
-            players={state.players}
             onSend={handleSend}
           />
         </div>
@@ -136,9 +121,9 @@ export default function App() {
           <div className="event-dialog">
             <h2>ゲーム終了</h2>
             <ol>
-              {state.rankings.map((p, i) => (
-                <li key={p.id}>
-                  {i + 1}位: {p.name} - ${p.money.toLocaleString()}
+              {state.rankings.map((r) => (
+                <li key={r.player_id}>
+                  {r.rank}位: {r.player_name} - ${r.total_assets.toLocaleString()}
                 </li>
               ))}
             </ol>

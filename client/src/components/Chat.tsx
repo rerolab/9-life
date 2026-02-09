@@ -1,22 +1,19 @@
 import { useState } from "react";
-import type { ClientMessage, PlayerState } from "../types/protocol";
+import type { ClientMessage } from "../types/protocol";
 
 interface ChatEntry {
   player_id: string;
+  player_name: string;
   text: string;
 }
 
 interface ChatProps {
   log: ChatEntry[];
-  players: PlayerState[];
   onSend: (msg: ClientMessage) => void;
 }
 
-export default function Chat({ log, players, onSend }: ChatProps) {
+export default function Chat({ log, onSend }: ChatProps) {
   const [text, setText] = useState("");
-
-  const playerName = (id: string) =>
-    players.find((p) => p.id === id)?.name ?? id;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +28,7 @@ export default function Chat({ log, players, onSend }: ChatProps) {
       <div className="chat-log">
         {log.map((entry, i) => (
           <div key={i} className="chat-entry">
-            <strong>{playerName(entry.player_id)}:</strong> {entry.text}
+            <strong>{entry.player_name}:</strong> {entry.text}
           </div>
         ))}
       </div>

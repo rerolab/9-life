@@ -18,7 +18,7 @@ export default function EventDialog({ choices, onSend }: EventDialogProps) {
               key={c.id}
               onClick={() => onSend({ type: "ChoiceAction", action_id: c.id })}
             >
-              {c.text}
+              {c.label}
             </button>
           ))}
         </div>

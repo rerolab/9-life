@@ -1,29 +1,29 @@
 import { useCallback, useReducer } from "react";
 import type {
   Choice,
-  GameState,
-  MapData,
-  PlayerState,
+  PlayerInfo,
+  RankingEntry,
   ServerMessage,
   TurnPhase,
 } from "../types/protocol";
 
 interface ChatEntry {
   player_id: string;
+  player_name: string;
   text: string;
 }
 
 export interface AppState {
   roomId: string | null;
   inviteUrl: string | null;
-  players: PlayerState[];
-  board: MapData | null;
+  myPlayerId: string | null;
+  players: PlayerInfo[];
   turnOrder: string[];
   currentTurn: number;
   phase: TurnPhase;
   rouletteValue: number | null;
   choices: Choice[];
-  rankings: PlayerState[];
+  rankings: RankingEntry[];
   chatLog: ChatEntry[];
   error: string | null;
   gameStarted: boolean;
@@ -32,8 +32,8 @@ export interface AppState {
 const initialState: AppState = {
   roomId: null,
   inviteUrl: null,
+  myPlayerId: null,
   players: [],
-  board: null,
   turnOrder: [],
   currentTurn: 0,
   phase: "WaitingForSpin",
@@ -53,14 +53,19 @@ function reducer(state: AppState, action: Action): AppState {
   const msg = action.msg;
   switch (msg.type) {
     case "RoomCreated":
-      return { ...state, roomId: msg.room_id, inviteUrl: msg.invite_url };
+      return {
+        ...state,
+        roomId: msg.room_id,
+        inviteUrl: msg.invite_url,
+        myPlayerId: msg.player_id,
+      };
 
     case "PlayerJoined":
       return {
         ...state,
-        players: state.players.some((p) => p.id === msg.player.id)
+        players: state.players.some((p) => p.id === msg.player_id)
           ? state.players
-          : [...state.players, msg.player],
+          : [...state.players, { id: msg.player_id, name: msg.player_name }],
       };
 
     case "PlayerLeft":
@@ -69,11 +74,16 @@ function reducer(state: AppState, action: Action): AppState {
         players: state.players.filter((p) => p.id !== msg.player_id),
       };
 
+    case "RoomState":
+      return {
+        ...state,
+        roomId: msg.room_id,
+        players: msg.players,
+      };
+
     case "GameStarted":
       return {
         ...state,
-        board: msg.board,
-        players: msg.players,
         turnOrder: msg.turn_order,
         gameStarted: true,
         phase: "WaitingForSpin",
@@ -86,18 +96,6 @@ function reducer(state: AppState, action: Action): AppState {
     case "PlayerMoved":
       return {
         ...state,
-        players: state.players.map((p) =>
-          p.id === msg.player_id ? { ...p, position: msg.position } : p,
-        ),
-        phase: msg.event ? "Event" : "TurnEnd",
-      };
-
-    case "EventResult":
-      return {
-        ...state,
-        players: state.players.map((p) =>
-          p.id === msg.player_id ? { ...p, ...msg.changes } : p,
-        ),
         phase: "TurnEnd",
       };
 
@@ -112,7 +110,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         chatLog: [
           ...state.chatLog,
-          { player_id: msg.player_id, text: msg.text },
+          { player_id: msg.player_id, player_name: msg.player_name, text: msg.text },
         ],
       };
 

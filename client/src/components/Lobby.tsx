@@ -1,10 +1,10 @@
 import { useState } from "react";
-import type { ClientMessage, PlayerState } from "../types/protocol";
+import type { ClientMessage, PlayerInfo } from "../types/protocol";
 
 interface LobbyProps {
   roomId: string | null;
   inviteUrl: string | null;
-  players: PlayerState[];
+  players: PlayerInfo[];
   isHost: boolean;
   onSend: (msg: ClientMessage) => void;
 }
