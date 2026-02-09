@@ -1,6 +1,5 @@
 /* ===== Nintendo-style Theme for 9-life ===== */
 
-/* --- CSS Variables --- */
 :root {
   --nin-red: #e60012;
   --nin-red-dark: #c4000f;
@@ -34,10 +33,12 @@ body {
   background: var(--nin-bg);
   color: var(--nin-text);
   min-height: 100vh;
+  min-height: 100dvh;
   background-image:
     radial-gradient(circle at 20% 80%, rgba(79, 196, 54, 0.06) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(10, 181, 245, 0.06) 0%, transparent 50%),
     radial-gradient(circle at 50% 50%, rgba(230, 0, 18, 0.03) 0%, transparent 70%);
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* --- Buttons --- */
@@ -56,6 +57,9 @@ button {
   transition: all 0.1s ease;
   position: relative;
   top: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 button:hover:not(:disabled) {
@@ -78,11 +82,9 @@ button.btn-blue {
   background: var(--nin-blue);
   box-shadow: 0 4px 0 var(--nin-blue-dark), var(--nin-shadow);
 }
-
 button.btn-blue:hover:not(:disabled) {
   box-shadow: 0 6px 0 var(--nin-blue-dark), var(--nin-shadow-lg);
 }
-
 button.btn-blue:active:not(:disabled) {
   box-shadow: 0 1px 0 var(--nin-blue-dark);
 }
@@ -91,27 +93,50 @@ button.btn-green {
   background: var(--nin-green);
   box-shadow: 0 4px 0 var(--nin-green-dark), var(--nin-shadow);
 }
-
 button.btn-green:hover:not(:disabled) {
   box-shadow: 0 6px 0 var(--nin-green-dark), var(--nin-shadow-lg);
 }
-
 button.btn-green:active:not(:disabled) {
   box-shadow: 0 1px 0 var(--nin-green-dark);
 }
 
+button.btn-lg {
+  padding: 14px 36px;
+  font-size: 17px;
+  min-width: 200px;
+}
+
+button.btn-text {
+  background: none;
+  color: var(--nin-text-light);
+  box-shadow: none;
+  font-size: 14px;
+  padding: 8px 16px;
+}
+button.btn-text:hover:not(:disabled) {
+  color: var(--nin-text);
+  box-shadow: none;
+  top: 0;
+}
+button.btn-text:active:not(:disabled) {
+  box-shadow: none;
+  top: 0;
+  opacity: 0.7;
+}
+
 /* --- Inputs --- */
 input, select {
-  padding: 10px 16px;
+  padding: 12px 18px;
   border: 2px solid var(--nin-card-border);
-  border-radius: 50px;
+  border-radius: 14px;
   background: var(--nin-card);
   color: var(--nin-text);
-  font-size: 15px;
+  font-size: 16px;
   font-family: var(--font-main);
   font-weight: 600;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
 }
 
 input:focus, select:focus {
@@ -128,62 +153,8 @@ input::placeholder {
 .app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 20px;
-}
-
-/* --- Connection Bar --- */
-.connection-bar {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 20px;
-  background: var(--nin-card);
-  padding: 10px 16px;
-  border-radius: var(--nin-radius);
-  box-shadow: var(--nin-shadow);
-}
-
-.connection-bar .ws-url {
-  flex: 1;
-  font-size: 13px;
-  color: var(--nin-text-light);
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.connection-bar button {
-  padding: 7px 18px;
-  font-size: 13px;
-}
-
-.status-indicator {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: inline-block;
-  border: 2px solid var(--nin-card);
-  box-shadow: 0 0 0 2px currentColor;
-}
-
-.status-indicator.connected {
-  background: var(--nin-green);
-  color: var(--nin-green);
-}
-.status-indicator.connecting {
-  background: var(--nin-yellow);
-  color: var(--nin-yellow);
-  animation: blink 1s infinite;
-}
-.status-indicator.disconnected {
-  background: var(--nin-red);
-  color: var(--nin-red);
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  padding: 16px;
+  padding: 16px env(safe-area-inset-right) 16px env(safe-area-inset-left);
 }
 
 /* --- Error Banner --- */
@@ -195,22 +166,6 @@ input::placeholder {
   color: #fff;
   font-weight: 700;
   box-shadow: var(--nin-shadow);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.error-banner::before {
-  content: "!";
-  display: inline-flex;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.25);
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
 }
 
 /* ===== Lobby ===== */
@@ -219,38 +174,38 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
+  padding: 24px 0 40px;
 }
 
 .lobby-title {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 900;
   background: linear-gradient(135deg, var(--nin-red) 0%, #ff6b6b 50%, var(--nin-yellow) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   filter: drop-shadow(0 2px 4px rgba(230, 0, 18, 0.2));
-  margin-bottom: 8px;
   letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .lobby-subtitle {
   font-size: 1rem;
   color: var(--nin-text-light);
   font-weight: 600;
-  margin-bottom: 16px;
 }
 
 .lobby-card {
   background: var(--nin-card);
   border-radius: var(--nin-radius);
   box-shadow: var(--nin-shadow);
-  padding: 28px 32px;
+  padding: 24px;
   width: 100%;
-  max-width: 420px;
+  max-width: 380px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
 }
 
@@ -258,24 +213,7 @@ input::placeholder {
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--nin-text);
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
-
-.lobby-card h2 .icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  color: #fff;
-}
-
-.lobby-card h2 .icon-red { background: var(--nin-red); }
-.lobby-card h2 .icon-blue { background: var(--nin-blue); }
 
 .lobby-field {
   display: flex;
@@ -289,6 +227,7 @@ input::placeholder {
   font-weight: 700;
   color: var(--nin-text-light);
   text-align: left;
+  padding-left: 4px;
 }
 
 .lobby-field input,
@@ -296,24 +235,17 @@ input::placeholder {
   width: 100%;
 }
 
-.lobby-divider {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--nin-text-light);
+.lobby-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
   width: 100%;
-  max-width: 420px;
+  max-width: 340px;
 }
 
-.lobby-divider::before,
-.lobby-divider::after {
-  content: "";
-  flex: 1;
-  height: 2px;
-  background: var(--nin-card-border);
-  border-radius: 1px;
+.lobby-actions button {
+  width: 100%;
+  min-width: 0;
 }
 
 /* Lobby: Waiting Room */
@@ -323,46 +255,44 @@ input::placeholder {
   border-radius: var(--nin-radius-sm);
   padding: 14px 20px;
   width: 100%;
-  max-width: 420px;
+  max-width: 380px;
   text-align: center;
 }
 
 .lobby-room-info .room-id-label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--nin-text-light);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .lobby-room-info .room-id-value {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 900;
   color: var(--nin-blue-dark);
   font-family: monospace;
 }
 
 .lobby-room-info .invite-url {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--nin-text-light);
   word-break: break-all;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .lobby-players-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  max-width: 420px;
 }
 
 .lobby-players-list li {
-  background: var(--nin-card);
+  background: var(--nin-bg);
   border-radius: var(--nin-radius-sm);
   padding: 10px 16px;
-  box-shadow: var(--nin-shadow);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -383,9 +313,10 @@ input::placeholder {
 }
 
 .lobby-waiting {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--nin-text-light);
   font-weight: 600;
+  padding: 4px 0;
 }
 
 /* ===== Game Layout ===== */
@@ -393,10 +324,11 @@ input::placeholder {
   max-width: 100%;
 }
 
+/* Desktop */
 .game-layout {
   display: flex;
   gap: 16px;
-  height: calc(100vh - 72px);
+  height: calc(100vh - 52px);
 }
 
 .game-main {
@@ -434,21 +366,21 @@ input::placeholder {
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 16px 24px;
+  padding: 14px 20px;
   background: var(--nin-card);
   border-radius: var(--nin-radius);
   box-shadow: var(--nin-shadow);
 }
 
 .roulette-display {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--nin-red), #ff6b6b);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 900;
   color: #fff;
   box-shadow: 0 4px 0 var(--nin-red-dark), 0 6px 16px rgba(230, 0, 18, 0.3);
@@ -466,9 +398,10 @@ input::placeholder {
 }
 
 .roulette-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--nin-text-light);
+  margin-top: 4px;
 }
 
 /* ===== Player Info ===== */
@@ -537,9 +470,6 @@ input::placeholder {
   font-weight: 800;
   margin-bottom: 8px;
   color: var(--nin-text);
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 /* ===== Chat ===== */
@@ -583,14 +513,13 @@ input::placeholder {
 
 .chat-form input {
   flex: 1;
-  border-radius: 50px;
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: 10px 16px;
+  font-size: 14px;
 }
 
 .chat-form button {
-  padding: 8px 18px;
-  font-size: 13px;
+  padding: 10px 18px;
+  font-size: 14px;
 }
 
 /* ===== Event Dialog ===== */
@@ -603,6 +532,7 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   z-index: 100;
+  padding: 20px;
   animation: overlay-in 0.2s ease;
 }
 
@@ -615,9 +545,9 @@ input::placeholder {
   background: var(--nin-card);
   border: 3px solid var(--nin-card-border);
   border-radius: var(--nin-radius);
-  padding: 32px;
-  min-width: 340px;
-  max-width: 480px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 400px;
   text-align: center;
   box-shadow: var(--nin-shadow-lg);
   animation: dialog-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -629,14 +559,14 @@ input::placeholder {
 }
 
 .event-dialog h2 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 900;
   margin-bottom: 20px;
   color: var(--nin-text);
 }
 
 .event-dialog h3 {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 800;
   margin-bottom: 20px;
   color: var(--nin-text);
@@ -644,14 +574,11 @@ input::placeholder {
 
 .event-dialog ol {
   list-style: none;
-  counter-reset: ranking;
   text-align: left;
-  margin: 0 auto;
-  max-width: 300px;
+  margin: 0;
 }
 
 .event-dialog ol li {
-  counter-increment: ranking;
   padding: 10px 14px;
   margin-bottom: 6px;
   background: var(--nin-bg);
@@ -683,26 +610,119 @@ input::placeholder {
   box-shadow: 0 1px 0 var(--nin-blue-dark);
 }
 
-/* ===== Game Over Rankings ===== */
-.game-over-title {
-  font-size: 2rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, var(--nin-yellow), #ff9800);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+/* ===== Responsive: Mobile ===== */
+.mobile-only { display: none; }
 
-/* ===== Current Player Highlight in sidebar list ===== */
-.current-player {
-  font-weight: 800;
-  color: var(--nin-red);
+@media (max-width: 768px) {
+  .desktop-only { display: none; }
+  .mobile-only { display: flex; }
+
+  .app {
+    padding: 12px;
+    padding-bottom: 0;
+  }
+
+  .lobby {
+    padding: 16px 0 32px;
+  }
+
+  .lobby-title {
+    font-size: 2.8rem;
+  }
+
+  .lobby-card {
+    max-width: 100%;
+    padding: 20px;
+  }
+
+  .lobby-actions {
+    max-width: 100%;
+  }
+
+  .lobby-room-info {
+    max-width: 100%;
+  }
+
+  /* Mobile game layout */
+  .game-mobile {
+    flex-direction: column;
+    height: calc(100dvh - 24px);
+  }
+
+  .mobile-tab-content {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+    padding-bottom: 8px;
+  }
+
+  .mobile-tab-content .chat {
+    height: 100%;
+  }
+
+  /* Mobile tab bar */
+  .mobile-tab-bar {
+    display: flex;
+    background: var(--nin-card);
+    border-top: 2px solid var(--nin-card-border);
+    padding: 4px 0;
+    padding-bottom: calc(4px + env(safe-area-inset-bottom));
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    border-radius: 0;
+    background: none;
+    color: var(--nin-text-light);
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: none;
+    top: 0;
+  }
+
+  .tab-btn:hover:not(:disabled) {
+    box-shadow: none;
+    top: 0;
+  }
+
+  .tab-btn:active:not(:disabled) {
+    box-shadow: none;
+    top: 0;
+    opacity: 0.7;
+  }
+
+  .tab-btn.active {
+    color: var(--nin-red);
+  }
+
+  .tab-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* Mobile roulette */
+  .game-mobile > .roulette {
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Mobile player info */
+  .player-info.current {
+    transform: none;
+  }
 }
 
 /* ===== Scrollbar styling ===== */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {

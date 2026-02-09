@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGameState } from "./hooks/useGameState";
 import type { ClientMessage } from "./types/protocol";
@@ -15,9 +15,12 @@ const DEFAULT_WS_URL =
     ? `wss://${location.hostname.replace(/\.\w+$/, "")}-server.fly.dev/ws`
     : "ws://localhost:3000/ws");
 
+type GameTab = "board" | "players" | "chat";
+
 export default function App() {
   const { status, connect, sendMessage, onMessage } = useWebSocket();
   const { state, handleServerMessage, reset } = useGameState();
+  const [activeTab, setActiveTab] = useState<GameTab>("board");
 
   useEffect(() => {
     onMessage((msg) => {
@@ -48,22 +51,6 @@ export default function App() {
   if (!state.gameStarted) {
     return (
       <div className="app">
-        <div className="connection-bar">
-          <span className="ws-url">{DEFAULT_WS_URL}</span>
-          <button
-            onClick={() =>
-              status === "connected" ? reset() : connect(DEFAULT_WS_URL)
-            }
-          >
-            {status === "connected"
-              ? "切断"
-              : status === "connecting"
-                ? "接続中..."
-                : "接続"}
-          </button>
-          <span className={`status-indicator ${status}`} />
-        </div>
-
         {state.error && <div className="error-banner">{state.error}</div>}
 
         <Lobby
@@ -72,6 +59,8 @@ export default function App() {
           players={state.players}
           isHost={isHost}
           onSend={handleSend}
+          connected={status === "connected"}
+          onDisconnect={reset}
         />
       </div>
     );
@@ -82,7 +71,8 @@ export default function App() {
     <div className="app game-view">
       {state.error && <div className="error-banner">{state.error}</div>}
 
-      <div className="game-layout">
+      {/* Desktop layout */}
+      <div className="game-layout desktop-only">
         <div className="game-main">
           {state.board && (
             <Board
@@ -128,6 +118,78 @@ export default function App() {
         </div>
       </div>
 
+      {/* Mobile layout */}
+      <div className="game-mobile mobile-only">
+        <Roulette
+          spinning={state.phase === "Spinning"}
+          result={state.rouletteValue}
+          onSpin={() => handleSend({ type: "SpinRoulette" })}
+          disabled={!isMyTurn || state.phase !== "WaitingForSpin"}
+        />
+
+        <div className="mobile-tab-content">
+          {activeTab === "board" && state.board && (
+            <Board
+              board={{
+                id: "",
+                name: "",
+                version: "",
+                start_money: 0,
+                loan_unit: 0,
+                loan_interest_rate: 0,
+                tiles: state.board.tiles,
+                careers: state.careers,
+                houses: state.houses,
+              }}
+              players={state.playerStates}
+            />
+          )}
+
+          {activeTab === "players" && (
+            <div className="players-panel">
+              {state.playerStates.map((ps) => (
+                <PlayerInfo
+                  key={ps.id}
+                  player={ps}
+                  isCurrent={ps.id === currentPlayerId}
+                />
+              ))}
+            </div>
+          )}
+
+          {activeTab === "chat" && (
+            <Chat
+              log={state.chatLog}
+              onSend={handleSend}
+            />
+          )}
+        </div>
+
+        <nav className="mobile-tab-bar">
+          <button
+            className={`tab-btn ${activeTab === "board" ? "active" : ""}`}
+            onClick={() => setActiveTab("board")}
+          >
+            <span className="tab-icon">&#9776;</span>
+            マップ
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "players" ? "active" : ""}`}
+            onClick={() => setActiveTab("players")}
+          >
+            <span className="tab-icon">&#9786;</span>
+            情報
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "chat" ? "active" : ""}`}
+            onClick={() => setActiveTab("chat")}
+          >
+            <span className="tab-icon">&#9993;</span>
+            チャット
+          </button>
+        </nav>
+      </div>
+
       {state.phase === "ChoosingPath" && state.choices.length > 0 && (
         <EventDialog choices={state.choices} onSend={handleSend} mode="path" />
       )}
@@ -139,7 +201,7 @@ export default function App() {
       {state.phase === "GameOver" && (
         <div className="event-dialog-overlay">
           <div className="event-dialog">
-            <h2>ゲーム終了</h2>
+            <h2>ゲーム終了!</h2>
             <ol>
               {state.rankings.map((r) => (
                 <li key={r.player_id}>
