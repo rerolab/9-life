@@ -94,6 +94,7 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...base,
         roomId: msg.room_id,
+        myPlayerId: msg.player_id,
         players: msg.players,
       };
 

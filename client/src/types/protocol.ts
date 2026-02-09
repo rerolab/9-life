@@ -168,4 +168,4 @@ export type ServerMessage =
   | { type: "GameEnded"; rankings: RankingEntry[] }
   | { type: "ChatBroadcast"; player_id: string; player_name: string; text: string }
   | { type: "Error"; code: string; message: string }
-  | { type: "RoomState"; room_id: string; players: PlayerInfo[]; status: string };
+  | { type: "RoomState"; room_id: string; player_id: string; players: PlayerInfo[]; status: string };

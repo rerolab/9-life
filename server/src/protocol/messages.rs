@@ -88,6 +88,7 @@ pub enum ServerMessage {
     },
     RoomState {
         room_id: RoomId,
+        player_id: PlayerId,
         players: Vec<PlayerInfo>,
         status: String,
     },

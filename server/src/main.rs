@@ -76,6 +76,18 @@ async fn handle_socket(socket: WebSocket, room_manager: AppState) {
             };
             let _ = sender.send(msg).await;
 
+            // ホスト自身のプレイヤー情報を含むRoomStateを送信
+            let room_state = ServerMessage::RoomState {
+                room_id: room_id.clone(),
+                player_id: player_id.clone(),
+                players: vec![crate::protocol::PlayerInfo {
+                    id: player_id.clone(),
+                    name: player_name.clone(),
+                }],
+                status: "Lobby".to_string(),
+            };
+            let _ = sender.send(room_state).await;
+
             (room_id, player_id, player_name)
         }
         Ok(ClientMessage::JoinRoom {
@@ -95,6 +107,17 @@ async fn handle_socket(socket: WebSocket, room_manager: AppState) {
                         player_name: player_name.clone(),
                     };
                     room_manager.broadcast(&room_id, &msg).await;
+
+                    // 参加者に現在のルーム状態を送信（roomIdとプレイヤー一覧）
+                    if let Some(info) = room_manager.get_room_info(&room_id).await {
+                        let room_state = ServerMessage::RoomState {
+                            room_id: room_id.clone(),
+                            player_id: player_id.clone(),
+                            players: info.players,
+                            status: info.status,
+                        };
+                        let _ = sender.send(room_state).await;
+                    }
 
                     (room_id, player_id, player_name)
                 }
