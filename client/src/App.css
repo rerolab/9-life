@@ -19,7 +19,7 @@
   --nin-radius: 16px;
   --nin-radius-sm: 10px;
   --nin-radius-xs: 6px;
-  --font-main: "Nunito", system-ui, -apple-system, sans-serif;
+  --font-main: "Nunito", "Noto Sans JP", system-ui, -apple-system, sans-serif;
 }
 
 /* --- Reset & Base --- */
