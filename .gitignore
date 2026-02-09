@@ -15,9 +15,8 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Generated types (ts-rs)
+# Generated types (ts-rs) - server output only
 server/bindings/
-client/src/types/generated/
 
 # Environment
 .env
