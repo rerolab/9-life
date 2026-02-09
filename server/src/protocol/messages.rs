@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::game::state::{Board, Career, House, PlayerState, TurnPhase};
+
 pub type RoomId = String;
 pub type PlayerId = String;
 
@@ -47,6 +49,15 @@ pub enum ServerMessage {
     },
     GameStarted {
         turn_order: Vec<PlayerId>,
+        board: Board,
+        players: Vec<PlayerState>,
+        careers: Vec<Career>,
+        houses: Vec<House>,
+    },
+    GameSync {
+        players: Vec<PlayerState>,
+        current_turn: usize,
+        phase: TurnPhase,
     },
     RouletteResult {
         player_id: PlayerId,
@@ -54,10 +65,14 @@ pub enum ServerMessage {
     },
     PlayerMoved {
         player_id: PlayerId,
-        position: u32,
+        position: usize,
     },
     ChoiceRequired {
         choices: Vec<Choice>,
+    },
+    TurnChanged {
+        current_turn: usize,
+        player_id: PlayerId,
     },
     GameEnded {
         rankings: Vec<RankingEntry>,

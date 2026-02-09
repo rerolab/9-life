@@ -1,0 +1,92 @@
+{
+  "id": "classic",
+  "name": "クラシック人生ゲーム",
+  "version": "1.0",
+  "start_money": 10000,
+  "loan_unit": 20000,
+  "loan_interest_rate": 1.25,
+  "tiles": [
+    {
+      "id": 0,
+      "type": "Start",
+      "position": { "x": 0, "y": 0 },
+      "next": [1, 6],
+      "labels": ["就職コース", "大学コース"]
+    },
+    {
+      "id": 1,
+      "type": "Career",
+      "position": { "x": 1, "y": 0 },
+      "next": [2],
+      "event": { "type": "draw_career", "pool": "basic" }
+    },
+    {
+      "id": 2,
+      "type": "Payday",
+      "position": { "x": 2, "y": 0 },
+      "next": [3]
+    },
+    {
+      "id": 3,
+      "type": "Action",
+      "position": { "x": 3, "y": 0 },
+      "next": [4],
+      "event": { "type": "money", "amount": 5000, "text": "宝くじ当選！" }
+    },
+    {
+      "id": 4,
+      "type": "Marry",
+      "position": { "x": 4, "y": 0 },
+      "next": [5]
+    },
+    {
+      "id": 5,
+      "type": "House",
+      "position": { "x": 5, "y": 0 },
+      "next": [9]
+    },
+    {
+      "id": 6,
+      "type": "Action",
+      "position": { "x": 0, "y": 1 },
+      "next": [7],
+      "event": { "type": "money", "amount": -5000, "text": "学費支払い" }
+    },
+    {
+      "id": 7,
+      "type": "Career",
+      "position": { "x": 1, "y": 1 },
+      "next": [8],
+      "event": { "type": "draw_career", "pool": "college" }
+    },
+    {
+      "id": 8,
+      "type": "Payday",
+      "position": { "x": 2, "y": 1 },
+      "next": [9]
+    },
+    {
+      "id": 9,
+      "type": "Baby",
+      "position": { "x": 3, "y": 1 },
+      "next": [10]
+    },
+    {
+      "id": 10,
+      "type": "Retire",
+      "position": { "x": 4, "y": 1 },
+      "next": []
+    }
+  ],
+  "careers": [
+    { "id": "doctor", "name": "医者", "salary": 50000, "pool": "college" },
+    { "id": "lawyer", "name": "弁護士", "salary": 45000, "pool": "college" },
+    { "id": "artist", "name": "芸術家", "salary": 20000, "pool": "basic" },
+    { "id": "athlete", "name": "スポーツ選手", "salary": 30000, "pool": "basic" }
+  ],
+  "houses": [
+    { "id": "cottage", "name": "コテージ", "price": 40000, "sell_price": 60000 },
+    { "id": "condo", "name": "マンション", "price": 80000, "sell_price": 100000 },
+    { "id": "mansion", "name": "豪邸", "price": 150000, "sell_price": 200000 }
+  ]
+}

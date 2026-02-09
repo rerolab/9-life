@@ -140,8 +140,87 @@ async fn handle_socket(socket: WebSocket, room_manager: AppState) {
                 room_manager.broadcast(&room_id, &msg).await;
                 break;
             }
+            Ok(ClientMessage::StartGame) => {
+                match room_manager.start_game(&room_id, &player_id).await {
+                    Ok(msgs) => {
+                        for msg in msgs {
+                            room_manager.broadcast(&room_id, &msg).await;
+                        }
+                    }
+                    Err(e) => {
+                        let _ = sender
+                            .send(ServerMessage::Error {
+                                code: "GAME_ERROR".to_string(),
+                                message: e,
+                            })
+                            .await;
+                    }
+                }
+            }
+            Ok(ClientMessage::SpinRoulette) => {
+                match room_manager.spin_roulette(&room_id, &player_id).await {
+                    Ok(msgs) => {
+                        for msg in msgs {
+                            room_manager.broadcast(&room_id, &msg).await;
+                        }
+                    }
+                    Err(e) => {
+                        let _ = sender
+                            .send(ServerMessage::Error {
+                                code: "GAME_ERROR".to_string(),
+                                message: e,
+                            })
+                            .await;
+                    }
+                }
+            }
+            Ok(ClientMessage::ChoicePath { path_index }) => {
+                match room_manager
+                    .choose_path(&room_id, &player_id, path_index)
+                    .await
+                {
+                    Ok(msgs) => {
+                        for msg in msgs {
+                            room_manager.broadcast(&room_id, &msg).await;
+                        }
+                    }
+                    Err(e) => {
+                        let _ = sender
+                            .send(ServerMessage::Error {
+                                code: "GAME_ERROR".to_string(),
+                                message: e,
+                            })
+                            .await;
+                    }
+                }
+            }
+            Ok(ClientMessage::ChoiceAction { action_id }) => {
+                match room_manager
+                    .choose_action(&room_id, &player_id, action_id)
+                    .await
+                {
+                    Ok(msgs) => {
+                        for msg in msgs {
+                            room_manager.broadcast(&room_id, &msg).await;
+                        }
+                    }
+                    Err(e) => {
+                        let _ = sender
+                            .send(ServerMessage::Error {
+                                code: "GAME_ERROR".to_string(),
+                                message: e,
+                            })
+                            .await;
+                    }
+                }
+            }
             Ok(_) => {
-                // game関連メッセージは将来実装
+                let _ = sender
+                    .send(ServerMessage::Error {
+                        code: "UNKNOWN_MESSAGE".to_string(),
+                        message: "Unrecognized message type".to_string(),
+                    })
+                    .await;
             }
             Err(_) => {
                 // 接続切断時の処理

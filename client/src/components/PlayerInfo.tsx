@@ -8,7 +8,10 @@ interface PlayerInfoProps {
 export default function PlayerInfo({ player, isCurrent }: PlayerInfoProps) {
   return (
     <div className={`player-info ${isCurrent ? "current" : ""}`}>
-      <h3>{player.name}{isCurrent ? " (手番)" : ""}</h3>
+      <h3>
+        {player.name}
+        {isCurrent && <span className="turn-badge">手番</span>}
+      </h3>
       <table>
         <tbody>
           <tr><td>所持金</td><td>${player.money.toLocaleString()}</td></tr>

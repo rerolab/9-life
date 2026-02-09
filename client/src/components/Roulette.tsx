@@ -33,9 +33,14 @@ export default function Roulette({
       <div className={`roulette-display ${spinning ? "spinning" : ""}`}>
         {display}
       </div>
-      <button onClick={onSpin} disabled={disabled || spinning}>
-        {spinning ? "回転中..." : "ルーレットを回す"}
-      </button>
+      <div>
+        <button className="btn-blue" onClick={onSpin} disabled={disabled || spinning}>
+          {spinning ? "回転中..." : "ルーレットを回す"}
+        </button>
+        <div className="roulette-label">
+          {disabled && !spinning ? "他のプレイヤーの番です" : ""}
+        </div>
+      </div>
     </div>
   );
 }

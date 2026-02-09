@@ -65,10 +65,23 @@ export interface MapData {
 }
 
 // ============================================================
+// Board (server format)
+// ============================================================
+
+export interface Board {
+  tiles: Tile[];
+}
+
+// ============================================================
 // Player / Game state
 // ============================================================
 
 export interface PlayerInfo {
+  id: string;
+  name: string;
+}
+
+export interface Stock {
   id: string;
   name: string;
 }
@@ -84,24 +97,26 @@ export interface PlayerState {
   children: number;
   life_insurance: boolean;
   auto_insurance: boolean;
-  stocks: string[];
+  stocks: Stock[];
   houses: House[];
   debt: number;
-  promissory_notes: number;
+  promissory_notes: { id: string; amount: number }[];
+  retired: boolean;
 }
 
 export type TurnPhase =
   | "WaitingForSpin"
   | "Spinning"
   | "Moving"
-  | "Event"
-  | "ChoiceRequired"
+  | "ResolvingEvent"
+  | "ChoosingPath"
+  | "ChoosingAction"
   | "TurnEnd"
   | "GameOver";
 
 export interface GameState {
   players: PlayerState[];
-  board: MapData;
+  board: Board;
   current_turn: number;
   phase: TurnPhase;
 }
@@ -144,10 +159,12 @@ export type ServerMessage =
   | { type: "RoomCreated"; room_id: string; invite_url: string; player_id: string }
   | { type: "PlayerJoined"; player_id: string; player_name: string }
   | { type: "PlayerLeft"; player_id: string }
-  | { type: "GameStarted"; turn_order: string[] }
+  | { type: "GameStarted"; turn_order: string[]; board: Board; players: PlayerState[]; careers: Career[]; houses: House[] }
+  | { type: "GameSync"; players: PlayerState[]; current_turn: number; phase: TurnPhase }
   | { type: "RouletteResult"; player_id: string; value: number }
   | { type: "PlayerMoved"; player_id: string; position: number }
   | { type: "ChoiceRequired"; choices: Choice[] }
+  | { type: "TurnChanged"; current_turn: number; player_id: string }
   | { type: "GameEnded"; rankings: RankingEntry[] }
   | { type: "ChatBroadcast"; player_id: string; player_name: string; text: string }
   | { type: "Error"; code: string; message: string }

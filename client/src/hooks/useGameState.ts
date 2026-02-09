@@ -1,7 +1,11 @@
 import { useCallback, useReducer } from "react";
 import type {
+  Board,
+  Career,
   Choice,
+  House,
   PlayerInfo,
+  PlayerState,
   RankingEntry,
   ServerMessage,
   TurnPhase,
@@ -27,6 +31,10 @@ export interface AppState {
   chatLog: ChatEntry[];
   error: string | null;
   gameStarted: boolean;
+  board: Board | null;
+  playerStates: PlayerState[];
+  careers: Career[];
+  houses: House[];
 }
 
 const initialState: AppState = {
@@ -43,6 +51,10 @@ const initialState: AppState = {
   chatLog: [],
   error: null,
   gameStarted: false,
+  board: null,
+  playerStates: [],
+  careers: [],
+  houses: [],
 };
 
 type Action = { type: "SERVER_MESSAGE"; msg: ServerMessage } | { type: "RESET" };
@@ -51,10 +63,14 @@ function reducer(state: AppState, action: Action): AppState {
   if (action.type === "RESET") return initialState;
 
   const msg = action.msg;
+
+  // Clear error when any non-error message arrives
+  const base = msg.type !== "Error" ? { ...state, error: null } : state;
+
   switch (msg.type) {
     case "RoomCreated":
       return {
-        ...state,
+        ...base,
         roomId: msg.room_id,
         inviteUrl: msg.invite_url,
         myPlayerId: msg.player_id,
@@ -62,54 +78,73 @@ function reducer(state: AppState, action: Action): AppState {
 
     case "PlayerJoined":
       return {
-        ...state,
-        players: state.players.some((p) => p.id === msg.player_id)
-          ? state.players
-          : [...state.players, { id: msg.player_id, name: msg.player_name }],
+        ...base,
+        players: base.players.some((p) => p.id === msg.player_id)
+          ? base.players
+          : [...base.players, { id: msg.player_id, name: msg.player_name }],
       };
 
     case "PlayerLeft":
       return {
-        ...state,
-        players: state.players.filter((p) => p.id !== msg.player_id),
+        ...base,
+        players: base.players.filter((p) => p.id !== msg.player_id),
       };
 
     case "RoomState":
       return {
-        ...state,
+        ...base,
         roomId: msg.room_id,
         players: msg.players,
       };
 
     case "GameStarted":
       return {
-        ...state,
+        ...base,
         turnOrder: msg.turn_order,
         gameStarted: true,
         phase: "WaitingForSpin",
         currentTurn: 0,
+        board: msg.board,
+        playerStates: msg.players,
+        careers: msg.careers,
+        houses: msg.houses,
+      };
+
+    case "GameSync":
+      return {
+        ...base,
+        playerStates: msg.players,
+        currentTurn: msg.current_turn,
+        phase: msg.phase,
+      };
+
+    case "TurnChanged":
+      return {
+        ...base,
+        currentTurn: msg.current_turn,
+        rouletteValue: null,
       };
 
     case "RouletteResult":
-      return { ...state, rouletteValue: msg.value, phase: "Moving" };
+      return { ...base, rouletteValue: msg.value, phase: "Moving" };
 
     case "PlayerMoved":
       return {
-        ...state,
+        ...base,
         phase: "TurnEnd",
       };
 
     case "ChoiceRequired":
-      return { ...state, choices: msg.choices, phase: "ChoiceRequired" };
+      return { ...base, choices: msg.choices };
 
     case "GameEnded":
-      return { ...state, rankings: msg.rankings, phase: "GameOver" };
+      return { ...base, rankings: msg.rankings, phase: "GameOver" };
 
     case "ChatBroadcast":
       return {
-        ...state,
+        ...base,
         chatLog: [
-          ...state.chatLog,
+          ...base.chatLog,
           { player_id: msg.player_id, player_name: msg.player_name, text: msg.text },
         ],
       };
@@ -118,7 +153,7 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, error: msg.message };
 
     default:
-      return state;
+      return base;
   }
 }
 

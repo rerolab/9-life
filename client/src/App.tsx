@@ -6,6 +6,8 @@ import Lobby from "./components/Lobby";
 import Roulette from "./components/Roulette";
 import Chat from "./components/Chat";
 import EventDialog from "./components/EventDialog";
+import Board from "./components/Board";
+import PlayerInfo from "./components/PlayerInfo";
 
 const DEFAULT_WS_URL =
   import.meta.env.VITE_WS_URL ??
@@ -47,7 +49,7 @@ export default function App() {
     return (
       <div className="app">
         <div className="connection-bar">
-          <span>{DEFAULT_WS_URL}</span>
+          <span className="ws-url">{DEFAULT_WS_URL}</span>
           <button
             onClick={() =>
               status === "connected" ? reset() : connect(DEFAULT_WS_URL)
@@ -82,6 +84,23 @@ export default function App() {
 
       <div className="game-layout">
         <div className="game-main">
+          {state.board && (
+            <Board
+              board={{
+                id: "",
+                name: "",
+                version: "",
+                start_money: 0,
+                loan_unit: 0,
+                loan_interest_rate: 0,
+                tiles: state.board.tiles,
+                careers: state.careers,
+                houses: state.houses,
+              }}
+              players={state.playerStates}
+            />
+          )}
+
           <Roulette
             spinning={state.phase === "Spinning"}
             result={state.rouletteValue}
@@ -93,16 +112,13 @@ export default function App() {
         <div className="game-sidebar">
           <div className="players-panel">
             <h3>プレイヤー</h3>
-            <ul>
-              {state.players.map((p) => (
-                <li
-                  key={p.id}
-                  className={p.id === currentPlayerId ? "current-player" : ""}
-                >
-                  {p.name}{p.id === currentPlayerId ? " (手番)" : ""}
-                </li>
-              ))}
-            </ul>
+            {state.playerStates.map((ps) => (
+              <PlayerInfo
+                key={ps.id}
+                player={ps}
+                isCurrent={ps.id === currentPlayerId}
+              />
+            ))}
           </div>
 
           <Chat
@@ -112,8 +128,12 @@ export default function App() {
         </div>
       </div>
 
-      {state.phase === "ChoiceRequired" && (
-        <EventDialog choices={state.choices} onSend={handleSend} />
+      {state.phase === "ChoosingPath" && state.choices.length > 0 && (
+        <EventDialog choices={state.choices} onSend={handleSend} mode="path" />
+      )}
+
+      {state.phase === "ChoosingAction" && state.choices.length > 0 && (
+        <EventDialog choices={state.choices} onSend={handleSend} mode="action" />
       )}
 
       {state.phase === "GameOver" && (
