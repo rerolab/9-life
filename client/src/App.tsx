@@ -9,7 +9,11 @@ import PlayerInfo from "./components/PlayerInfo";
 import Chat from "./components/Chat";
 import EventDialog from "./components/EventDialog";
 
-const DEFAULT_WS_URL = "ws://localhost:3000/ws";
+const DEFAULT_WS_URL =
+  import.meta.env.VITE_WS_URL ??
+  (location.protocol === "https:"
+    ? `wss://${location.hostname.replace(/\.\w+$/, "")}-server.fly.dev/ws`
+    : "ws://localhost:3000/ws");
 
 export default function App() {
   const { status, connect, sendMessage, onMessage } = useWebSocket();
