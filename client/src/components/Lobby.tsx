@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { ClientMessage, PlayerInfo } from "../types/protocol";
 
@@ -14,6 +14,19 @@ interface LobbyProps {
 
 const AVATAR_COLORS = ["#e60012", "#0ab5f5", "#4fc436", "#ff9800", "#8e24aa", "#00acc1"];
 
+function Title() {
+  return (
+    <motion.h1
+      className="lobby-title"
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+    >
+      <span className="lobby-title-nine">9</span><span className="lobby-title-sep" aria-hidden="true" /><span className="lobby-title-life">life</span>
+    </motion.h1>
+  );
+}
+
 export default function Lobby({
   roomId,
   inviteUrl,
@@ -26,6 +39,14 @@ export default function Lobby({
   const [playerName, setPlayerName] = useState("");
   const [joinRoomId, setJoinRoomId] = useState("");
   const [mode, setMode] = useState<"home" | "join">("home");
+  const [copiedField, setCopiedField] = useState<"roomId" | "url" | null>(null);
+
+  const copyToClipboard = useCallback((text: string, field: "roomId" | "url") => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
+  }, []);
 
   const handleCreate = () => {
     if (!playerName.trim()) return;
@@ -62,19 +83,41 @@ export default function Lobby({
           className="lobby"
           {...modeTransition}
         >
-          <motion.h1
-            className="lobby-title"
-            initial={{ opacity: 0, scale: 0.8, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-          >
-            9-life
-          </motion.h1>
+          <Title />
 
           <div className="lobby-room-info">
             <div className="room-id-label">部屋ID</div>
-            <div className="room-id-value">{roomId}</div>
-            {inviteUrl && <div className="invite-url">{inviteUrl}</div>}
+            <button
+              className="room-id-copy-row"
+              onClick={() => roomId && copyToClipboard(roomId, "roomId")}
+              title="部屋IDをコピー"
+            >
+              <span className="room-id-value">{roomId}</span>
+              <span className="copy-icon">{copiedField === "roomId" ? "✓" : "⧉"}</span>
+            </button>
+            {inviteUrl && (
+              <button
+                className="invite-url-copy-row"
+                onClick={() => copyToClipboard(inviteUrl, "url")}
+                title="招待URLをコピー"
+              >
+                <span className="invite-url-text">{inviteUrl}</span>
+                <span className="copy-icon">{copiedField === "url" ? "✓" : "⧉"}</span>
+              </button>
+            )}
+            <AnimatePresence>
+              {copiedField && (
+                <motion.div
+                  className="copy-toast"
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  コピーしました!
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <motion.div
@@ -152,14 +195,7 @@ export default function Lobby({
           className="lobby"
           {...modeTransition}
         >
-          <motion.h1
-            className="lobby-title"
-            initial={{ opacity: 0, scale: 0.8, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-          >
-            9-life
-          </motion.h1>
+          <Title />
 
           <motion.div
             className="lobby-card"
@@ -211,14 +247,7 @@ export default function Lobby({
           className="lobby"
           {...modeTransition}
         >
-          <motion.h1
-            className="lobby-title"
-            initial={{ opacity: 0, scale: 0.8, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-          >
-            9-life
-          </motion.h1>
+          <Title />
           <motion.p
             className="lobby-subtitle"
             initial={{ opacity: 0 }}
