@@ -13,3 +13,4 @@ uuid = { version = "1", features = ["v4"] }
 rand = "0.10"
 async-trait = "0.1"
 futures-util = "0.3"
+ts-rs = { version = "10", features = ["serde-compat"] }

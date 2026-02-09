@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::protocol::PlayerId;
 
@@ -6,12 +7,15 @@ use crate::protocol::PlayerId;
 // Map data types (loaded from JSON)
 // ============================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct MapData {
     pub id: String,
     pub name: String,
     pub version: String,
+    #[ts(type = "number")]
     pub start_money: i64,
+    #[ts(type = "number")]
     pub loan_unit: u64,
     pub loan_interest_rate: f64,
     pub tiles: Vec<TileData>,
@@ -19,7 +23,8 @@ pub struct MapData {
     pub houses: Vec<House>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct TileData {
     pub id: usize,
     #[serde(rename = "type")]
@@ -30,13 +35,15 @@ pub struct TileData {
     pub labels: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Position {
     pub x: f64,
     pub y: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
 pub enum TileType {
     Start,
     Payday,
@@ -53,16 +60,22 @@ pub enum TileType {
     Retire,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 #[serde(tag = "type")]
 pub enum TileEvent {
     #[serde(rename = "money")]
-    Money { amount: i64, text: String },
+    Money {
+        #[ts(type = "number")]
+        amount: i64,
+        text: String,
+    },
     #[serde(rename = "draw_career")]
     DrawCareer { pool: String },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Career {
     pub id: String,
     pub name: String,
@@ -70,11 +83,14 @@ pub struct Career {
     pub pool: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct House {
     pub id: String,
     pub name: String,
+    #[ts(type = "number")]
     pub price: i64,
+    #[ts(type = "number")]
     pub sell_price: i64,
 }
 
@@ -82,14 +98,17 @@ pub struct House {
 // Game state
 // ============================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Board {
     pub tiles: Vec<Tile>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Tile {
     pub id: usize,
+    #[serde(rename = "type")]
     pub tile_type: TileType,
     pub position: Position,
     pub next: Vec<usize>,
@@ -124,22 +143,27 @@ impl Board {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Stock {
     pub id: String,
     pub name: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct PromissoryNote {
     pub id: String,
+    #[ts(type = "number")]
     pub amount: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct PlayerState {
     pub id: PlayerId,
     pub name: String,
+    #[ts(type = "number")]
     pub money: i64,
     pub career: Option<Career>,
     pub salary: u32,
@@ -149,6 +173,7 @@ pub struct PlayerState {
     pub auto_insurance: bool,
     pub stocks: Vec<Stock>,
     pub houses: Vec<House>,
+    #[ts(type = "number")]
     pub debt: u64,
     pub promissory_notes: Vec<PromissoryNote>,
     pub position: usize,
@@ -185,7 +210,8 @@ impl PlayerState {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[ts(export)]
 pub enum TurnPhase {
     WaitingForSpin,
     Spinning,

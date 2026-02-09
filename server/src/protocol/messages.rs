@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::game::state::{Board, Career, House, PlayerState, TurnPhase};
 
@@ -6,7 +7,8 @@ pub type RoomId = String;
 pub type PlayerId = String;
 
 /// クライアント -> サーバー メッセージ
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 #[serde(tag = "type")]
 pub enum ClientMessage {
     CreateRoom {
@@ -32,7 +34,8 @@ pub enum ClientMessage {
 }
 
 /// サーバー -> クライアント メッセージ
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 #[serde(tag = "type")]
 pub enum ServerMessage {
     RoomCreated {
@@ -94,21 +97,25 @@ pub enum ServerMessage {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Choice {
     pub id: String,
     pub label: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct RankingEntry {
     pub player_id: PlayerId,
     pub player_name: String,
+    #[ts(type = "number")]
     pub total_assets: i64,
     pub rank: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct PlayerInfo {
     pub id: PlayerId,
     pub name: String,
