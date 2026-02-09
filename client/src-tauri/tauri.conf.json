@@ -9,7 +9,6 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
-    "title": "9-life",
     "windows": [
       {
         "title": "9-life",
