@@ -1,8 +1,12 @@
+import { useEffect, useRef } from "react";
+import { motion } from "motion/react";
 import type { MapData, PlayerState } from "../types/protocol";
 
 interface BoardProps {
   board: MapData;
   players: PlayerState[];
+  prevPositions: Record<string, number>;
+  currentPlayerId: string | null;
 }
 
 const TILE_SIZE = 60;
@@ -25,7 +29,9 @@ const COLORS: Record<string, string> = {
 
 const PLAYER_COLORS = ["#e53935", "#1e88e5", "#43a047", "#fb8c00", "#8e24aa", "#00acc1"];
 
-export default function Board({ board, players }: BoardProps) {
+export default function Board({ board, players, prevPositions, currentPlayerId }: BoardProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const maxX = Math.max(...board.tiles.map((t) => t.position.x), 0);
   const maxY = Math.max(...board.tiles.map((t) => t.position.y), 0);
   const svgW = (maxX + 1) * (TILE_SIZE + TILE_GAP) + TILE_GAP;
@@ -36,9 +42,30 @@ export default function Board({ board, players }: BoardProps) {
     cy: TILE_GAP + y * (TILE_SIZE + TILE_GAP) + TILE_SIZE / 2,
   });
 
+  // 現在のプレイヤーが乗っているタイルIDを取得
+  const currentPlayer = players.find((p) => p.id === currentPlayerId);
+  const currentTileId = currentPlayer?.position ?? null;
+
+  // 自動スクロール: 現在プレイヤーのタイル位置にスムーズスクロール
+  useEffect(() => {
+    if (!containerRef.current || currentTileId === null) return;
+    const tile = board.tiles.find((t) => t.id === currentTileId);
+    if (!tile) return;
+    const { cx, cy } = tilePos(tile.position.x, tile.position.y);
+    const container = containerRef.current;
+    const scrollX = cx - container.clientWidth / 2;
+    const scrollY = cy - container.clientHeight / 2;
+    container.scrollTo({ left: scrollX, top: scrollY, behavior: "smooth" });
+  }, [currentPlayerId, currentTileId, board.tiles]);
+
   return (
-    <div className="board-container">
-      <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`}>
+    <div className="board-container" ref={containerRef}>
+      <svg
+        width={svgW}
+        height={svgH}
+        viewBox={`0 0 ${svgW} ${svgH}`}
+        style={{ overflow: "visible" }}
+      >
         {/* Edges */}
         {board.tiles.map((tile) =>
           tile.next.map((nextId) => {
@@ -47,14 +74,16 @@ export default function Board({ board, players }: BoardProps) {
             const from = tilePos(tile.position.x, tile.position.y);
             const to = tilePos(nextTile.position.x, nextTile.position.y);
             return (
-              <line
+              <motion.path
                 key={`${tile.id}-${nextId}`}
-                x1={from.cx}
-                y1={from.cy}
-                x2={to.cx}
-                y2={to.cy}
-                stroke="#999"
-                strokeWidth={2}
+                d={`M ${from.cx} ${from.cy} L ${to.cx} ${to.cy}`}
+                stroke="#b0bec5"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                fill="none"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.6, delay: tile.id * 0.02, ease: "easeOut" }}
               />
             );
           }),
@@ -63,17 +92,30 @@ export default function Board({ board, players }: BoardProps) {
         {/* Tiles */}
         {board.tiles.map((tile) => {
           const { cx, cy } = tilePos(tile.position.x, tile.position.y);
+          const isCurrentTile = tile.id === currentTileId;
           return (
-            <g key={tile.id}>
-              <rect
+            <motion.g
+              key={tile.id}
+              whileHover={{ scale: 1.08 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              style={{ originX: `${cx}px`, originY: `${cy}px` }}
+            >
+              <motion.rect
                 x={cx - TILE_SIZE / 2}
                 y={cy - TILE_SIZE / 2}
                 width={TILE_SIZE}
                 height={TILE_SIZE}
-                rx={6}
+                rx={8}
                 fill={COLORS[tile.type] ?? "#ccc"}
-                stroke="#333"
-                strokeWidth={1}
+                stroke={isCurrentTile ? "#FFD700" : "#333"}
+                strokeWidth={isCurrentTile ? 3 : 1}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{
+                  duration: 0.4,
+                  delay: tile.id * 0.03,
+                  ease: "easeOut",
+                }}
               />
               <text
                 x={cx}
@@ -93,7 +135,7 @@ export default function Board({ board, players }: BoardProps) {
               >
                 #{tile.id}
               </text>
-            </g>
+            </motion.g>
           );
         })}
 
@@ -104,16 +146,48 @@ export default function Board({ board, players }: BoardProps) {
           const { cx, cy } = tilePos(tile.position.x, tile.position.y);
           const offsetX = (idx % 3) * 14 - 14;
           const offsetY = idx < 3 ? -20 : 24;
+          const targetX = cx + offsetX;
+          const targetY = cy + offsetY;
+          const color = PLAYER_COLORS[idx % PLAYER_COLORS.length];
+          const initial = player.id.charAt(0).toUpperCase();
+
           return (
-            <circle
-              key={player.id}
-              cx={cx + offsetX}
-              cy={cy + offsetY}
-              r={8}
-              fill={PLAYER_COLORS[idx % PLAYER_COLORS.length]}
-              stroke="#fff"
-              strokeWidth={2}
-            />
+            <g key={player.id}>
+              <motion.circle
+                cx={targetX}
+                cy={targetY}
+                animate={{ cx: targetX, cy: targetY }}
+                transition={{
+                  type: "spring",
+                  stiffness: 120,
+                  damping: 14,
+                  mass: 0.8,
+                }}
+                r={10}
+                fill={color}
+                stroke="#fff"
+                strokeWidth={2.5}
+              />
+              <motion.text
+                x={targetX}
+                y={targetY}
+                animate={{ x: targetX, y: targetY }}
+                transition={{
+                  type: "spring",
+                  stiffness: 120,
+                  damping: 14,
+                  mass: 0.8,
+                }}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={10}
+                fontWeight="bold"
+                fill="#fff"
+                pointerEvents="none"
+              >
+                {initial}
+              </motion.text>
+            </g>
           );
         })}
       </svg>

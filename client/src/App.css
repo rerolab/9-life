@@ -359,6 +359,7 @@ input::placeholder {
 
 .board-container svg {
   display: block;
+  overflow: visible;
 }
 
 /* ===== Roulette ===== */
@@ -384,17 +385,8 @@ input::placeholder {
   font-weight: 900;
   color: #fff;
   box-shadow: 0 4px 0 var(--nin-red-dark), 0 6px 16px rgba(230, 0, 18, 0.3);
-  transition: transform 0.15s;
   flex-shrink: 0;
-}
-
-.roulette-display.spinning {
-  animation: roulette-spin 0.1s infinite alternate;
-}
-
-@keyframes roulette-spin {
-  from { transform: scale(1) rotate(-5deg); }
-  to { transform: scale(1.08) rotate(5deg); }
+  overflow: hidden;
 }
 
 .roulette-label {
@@ -412,12 +404,10 @@ input::placeholder {
   margin-bottom: 8px;
   box-shadow: var(--nin-shadow);
   border-left: 5px solid transparent;
-  transition: border-color 0.2s, transform 0.2s;
+  /* border/transform transitions handled by motion */
 }
 
 .player-info.current {
-  border-left-color: var(--nin-red);
-  transform: translateX(4px);
   box-shadow: var(--nin-shadow-lg);
 }
 
@@ -533,12 +523,7 @@ input::placeholder {
   justify-content: center;
   z-index: 100;
   padding: 20px;
-  animation: overlay-in 0.2s ease;
-}
-
-@keyframes overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  /* overlay-in animation handled by motion */
 }
 
 .event-dialog {
@@ -550,12 +535,7 @@ input::placeholder {
   max-width: 400px;
   text-align: center;
   box-shadow: var(--nin-shadow-lg);
-  animation: dialog-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes dialog-in {
-  from { transform: scale(0.85) translateY(20px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
+  /* dialog-in animation handled by motion */
 }
 
 .event-dialog h2 {
@@ -608,6 +588,36 @@ input::placeholder {
 
 .event-choices button:nth-child(2n):active:not(:disabled) {
   box-shadow: 0 1px 0 var(--nin-blue-dark);
+}
+
+/* ===== Game Over Rankings ===== */
+.event-dialog ul li {
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  background: var(--nin-bg);
+  border-radius: var(--nin-radius-xs);
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.rank-number {
+  font-size: 1.3rem;
+  font-weight: 900;
+  margin-right: 10px;
+  min-width: 40px;
+}
+
+.rank-name {
+  font-weight: 700;
+  flex: 1;
+}
+
+.rank-assets {
+  font-weight: 800;
+  color: var(--nin-green-dark);
+  margin-left: auto;
 }
 
 /* ===== Responsive: Mobile ===== */

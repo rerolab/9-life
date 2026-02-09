@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from "motion/react";
 import type { PlayerState } from "../types/protocol";
 
 interface PlayerInfoProps {
@@ -7,14 +8,44 @@ interface PlayerInfoProps {
 
 export default function PlayerInfo({ player, isCurrent }: PlayerInfoProps) {
   return (
-    <div className={`player-info ${isCurrent ? "current" : ""}`}>
+    <motion.div
+      className={`player-info ${isCurrent ? "current" : ""}`}
+      layout
+      animate={{
+        borderLeftColor: isCurrent ? "var(--nin-red)" : "transparent",
+        x: isCurrent ? 4 : 0,
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 25 }}
+    >
       <h3>
         {player.name}
-        {isCurrent && <span className="turn-badge">手番</span>}
+        <AnimatePresence>
+          {isCurrent && (
+            <motion.span
+              className="turn-badge"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 20 }}
+            >
+              手番
+            </motion.span>
+          )}
+        </AnimatePresence>
       </h3>
       <table>
         <tbody>
-          <tr><td>所持金</td><td>${player.money.toLocaleString()}</td></tr>
+          <tr>
+            <td>所持金</td>
+            <motion.td
+              key={player.money}
+              initial={{ color: "#e60012", scale: 1.1 }}
+              animate={{ color: "var(--nin-text)", scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              ${player.money.toLocaleString()}
+            </motion.td>
+          </tr>
           <tr><td>職業</td><td>{player.career?.name ?? "なし"}</td></tr>
           <tr><td>給料</td><td>${player.salary.toLocaleString()}</td></tr>
           <tr><td>配偶者</td><td>{player.married ? "あり" : "なし"}</td></tr>
@@ -26,6 +57,6 @@ export default function PlayerInfo({ player, isCurrent }: PlayerInfoProps) {
           <tr><td>借金</td><td>${player.debt.toLocaleString()}</td></tr>
         </tbody>
       </table>
-    </div>
+    </motion.div>
   );
 }

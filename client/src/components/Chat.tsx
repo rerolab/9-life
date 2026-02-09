@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "motion/react";
 import type { ClientMessage } from "../types/protocol";
 
 interface ChatEntry {
@@ -27,9 +28,15 @@ export default function Chat({ log, onSend }: ChatProps) {
       <h3>チャット</h3>
       <div className="chat-log">
         {log.map((entry, i) => (
-          <div key={i} className="chat-entry">
+          <motion.div
+            key={i}
+            className="chat-entry"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
             <strong>{entry.player_name}:</strong> {entry.text}
-          </div>
+          </motion.div>
         ))}
       </div>
       <form onSubmit={handleSubmit} className="chat-form">
@@ -38,7 +45,9 @@ export default function Chat({ log, onSend }: ChatProps) {
           onChange={(e) => setText(e.target.value)}
           placeholder="メッセージを入力"
         />
-        <button type="submit">送信</button>
+        <motion.button type="submit" whileTap={{ scale: 0.9 }}>
+          送信
+        </motion.button>
       </form>
     </div>
   );

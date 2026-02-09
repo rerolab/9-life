@@ -35,6 +35,7 @@ export interface AppState {
   playerStates: PlayerState[];
   careers: Career[];
   houses: House[];
+  prevPlayerPositions: Record<string, number>;
 }
 
 const initialState: AppState = {
@@ -55,6 +56,7 @@ const initialState: AppState = {
   playerStates: [],
   careers: [],
   houses: [],
+  prevPlayerPositions: {},
 };
 
 type Action = { type: "SERVER_MESSAGE"; msg: ServerMessage } | { type: "RESET" };
@@ -114,6 +116,9 @@ function reducer(state: AppState, action: Action): AppState {
     case "GameSync":
       return {
         ...base,
+        prevPlayerPositions: Object.fromEntries(
+          base.playerStates.map(ps => [ps.id, ps.position])
+        ),
         playerStates: msg.players,
         currentTurn: msg.current_turn,
         phase: msg.phase,
