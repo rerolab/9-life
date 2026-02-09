@@ -10,6 +10,7 @@ import EventDialog from "./components/EventDialog";
 import Board from "./components/Board";
 import PlayerInfo from "./components/PlayerInfo";
 import GameOverScreen from "./components/GameOverScreen";
+import EventToast from "./components/EventToast";
 
 const DEFAULT_WS_URL =
   import.meta.env.VITE_WS_URL ??
@@ -230,6 +231,13 @@ export default function App() {
                 </motion.button>
               </nav>
             </div>
+
+            <EventToast
+              playerStates={state.playerStates}
+              prevPositions={state.prevPlayerPositions}
+              currentPlayerId={currentPlayerId}
+              tiles={state.board?.tiles ?? []}
+            />
 
             <AnimatePresence>
               {state.phase === "ChoosingPath" && state.choices.length > 0 && (
