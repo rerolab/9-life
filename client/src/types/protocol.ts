@@ -1,0 +1,156 @@
+// ============================================================
+// Tile / Map types
+// ============================================================
+
+export type TileType =
+  | "Start"
+  | "Payday"
+  | "Action"
+  | "Career"
+  | "House"
+  | "Marry"
+  | "Baby"
+  | "Stock"
+  | "Insurance"
+  | "Tax"
+  | "Lawsuit"
+  | "Branch"
+  | "Retire";
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface TileEvent {
+  type: string;
+  amount?: number;
+  text?: string;
+  pool?: string;
+}
+
+export interface Tile {
+  id: number;
+  type: TileType;
+  position: Position;
+  next: number[];
+  event?: TileEvent;
+  labels?: string[];
+}
+
+export interface Career {
+  id: string;
+  name: string;
+  salary: number;
+  pool: string;
+}
+
+export interface House {
+  id: string;
+  name: string;
+  price: number;
+  sell_price: number;
+}
+
+export interface MapData {
+  id: string;
+  name: string;
+  version: string;
+  start_money: number;
+  loan_unit: number;
+  loan_interest_rate: number;
+  tiles: Tile[];
+  careers: Career[];
+  houses: House[];
+}
+
+// ============================================================
+// Player / Game state
+// ============================================================
+
+export interface PlayerState {
+  id: string;
+  name: string;
+  money: number;
+  position: number;
+  career: Career | null;
+  salary: number;
+  married: boolean;
+  children: number;
+  life_insurance: boolean;
+  auto_insurance: boolean;
+  stocks: string[];
+  houses: House[];
+  debt: number;
+  promissory_notes: number;
+}
+
+export type TurnPhase =
+  | "WaitingForSpin"
+  | "Spinning"
+  | "Moving"
+  | "Event"
+  | "ChoiceRequired"
+  | "TurnEnd"
+  | "GameOver";
+
+export interface GameState {
+  players: PlayerState[];
+  board: MapData;
+  current_turn: number;
+  phase: TurnPhase;
+}
+
+// ============================================================
+// Choice
+// ============================================================
+
+export interface Choice {
+  id: string;
+  text: string;
+}
+
+// ============================================================
+// Client -> Server messages
+// ============================================================
+
+export type ClientMessage =
+  | { type: "CreateRoom"; player_name: string; map_id: string }
+  | { type: "JoinRoom"; room_id: string; player_name: string }
+  | { type: "LeaveRoom" }
+  | { type: "StartGame" }
+  | { type: "SpinRoulette" }
+  | { type: "ChoicePath"; path_index: number }
+  | { type: "ChoiceAction"; action_id: string }
+  | { type: "ChatMessage"; text: string };
+
+// ============================================================
+// Server -> Client messages
+// ============================================================
+
+export type ServerMessage =
+  | { type: "RoomCreated"; room_id: string; invite_url: string }
+  | { type: "PlayerJoined"; player: PlayerState }
+  | { type: "PlayerLeft"; player_id: string }
+  | {
+      type: "GameStarted";
+      board: MapData;
+      players: PlayerState[];
+      turn_order: string[];
+    }
+  | { type: "RouletteResult"; player_id: string; value: number }
+  | {
+      type: "PlayerMoved";
+      player_id: string;
+      position: number;
+      event: TileEvent | null;
+    }
+  | {
+      type: "EventResult";
+      player_id: string;
+      changes: Partial<PlayerState>;
+    }
+  | { type: "ChoiceRequired"; choices: Choice[] }
+  | { type: "GameEnded"; rankings: PlayerState[] }
+  | { type: "ChatBroadcast"; player_id: string; text: string }
+  | { type: "Error"; code: number; message: string };

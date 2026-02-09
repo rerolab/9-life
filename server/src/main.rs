@@ -1,0 +1,157 @@
+mod chat;
+mod config;
+mod game;
+mod protocol;
+mod room;
+mod transport;
+mod web;
+
+use std::sync::Arc;
+
+use axum::extract::ws::WebSocket;
+use axum::extract::{State, WebSocketUpgrade};
+use axum::response::IntoResponse;
+use axum::routing::get;
+use axum::Router;
+use tower_http::cors::{Any, CorsLayer};
+
+use crate::config::ServerConfig;
+use crate::protocol::{ClientMessage, ServerMessage};
+use crate::room::RoomManager;
+use crate::transport::{split_websocket, Transport};
+
+type AppState = Arc<RoomManager>;
+
+#[tokio::main]
+async fn main() {
+    let config = ServerConfig::default();
+    let room_manager = Arc::new(RoomManager::new(config.max_players_per_room));
+
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    let app = Router::new()
+        .route("/room/{id}", get(web::invite_page))
+        .route("/api/room/{id}", get(web::room_info))
+        .route("/ws", get(ws_upgrade))
+        .layer(cors)
+        .with_state(room_manager);
+
+    let addr = config.addr();
+    println!("9-life server listening on {}", addr);
+
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+}
+
+async fn ws_upgrade(
+    ws: WebSocketUpgrade,
+    State(room_manager): State<AppState>,
+) -> impl IntoResponse {
+    ws.on_upgrade(move |socket| handle_socket(socket, room_manager))
+}
+
+async fn handle_socket(socket: WebSocket, room_manager: AppState) {
+    let (sender, mut receiver) = split_websocket(socket);
+
+    // 最初のメッセージで CreateRoom か JoinRoom を待つ
+    let (room_id, player_id, player_name) = match receiver.recv().await {
+        Ok(ClientMessage::CreateRoom {
+            player_name,
+            map_id,
+        }) => {
+            let sender_clone = sender.clone();
+            let transport_arc: Arc<dyn Transport> = Arc::new(sender_clone);
+            let (room_id, player_id) = room_manager
+                .create_room(player_name.clone(), map_id, transport_arc)
+                .await;
+
+            let invite_url = format!("/room/{}", room_id);
+            let msg = ServerMessage::RoomCreated {
+                room_id: room_id.clone(),
+                invite_url,
+                player_id: player_id.clone(),
+            };
+            let _ = sender.send(msg).await;
+
+            (room_id, player_id, player_name)
+        }
+        Ok(ClientMessage::JoinRoom {
+            room_id,
+            player_name,
+        }) => {
+            let sender_clone = sender.clone();
+            let transport_arc: Arc<dyn Transport> = Arc::new(sender_clone);
+            match room_manager
+                .join_room(&room_id, player_name.clone(), transport_arc)
+                .await
+            {
+                Ok(player_id) => {
+                    // 参加を他のプレイヤーに通知
+                    let msg = ServerMessage::PlayerJoined {
+                        player_id: player_id.clone(),
+                        player_name: player_name.clone(),
+                    };
+                    room_manager.broadcast(&room_id, &msg).await;
+
+                    (room_id, player_id, player_name)
+                }
+                Err(e) => {
+                    let msg = ServerMessage::Error {
+                        code: "JOIN_FAILED".to_string(),
+                        message: e,
+                    };
+                    let _ = sender.send(msg).await;
+                    return;
+                }
+            }
+        }
+        Ok(_) => {
+            let msg = ServerMessage::Error {
+                code: "INVALID_FIRST_MESSAGE".to_string(),
+                message: "Expected CreateRoom or JoinRoom".to_string(),
+            };
+            let _ = sender.send(msg).await;
+            return;
+        }
+        Err(_) => return,
+    };
+
+    // メッセージループ
+    loop {
+        match receiver.recv().await {
+            Ok(ClientMessage::ChatMessage { text }) => {
+                chat::handle_chat(
+                    &room_manager,
+                    &room_id,
+                    &player_id,
+                    &player_name,
+                    text,
+                )
+                .await;
+            }
+            Ok(ClientMessage::LeaveRoom) => {
+                let _ = room_manager.leave_room(&room_id, &player_id).await;
+                let msg = ServerMessage::PlayerLeft {
+                    player_id: player_id.clone(),
+                };
+                room_manager.broadcast(&room_id, &msg).await;
+                break;
+            }
+            Ok(_) => {
+                // game関連メッセージは将来実装
+            }
+            Err(_) => {
+                // 接続切断時の処理
+                let _ = room_manager.leave_room(&room_id, &player_id).await;
+                let msg = ServerMessage::PlayerLeft {
+                    player_id: player_id.clone(),
+                };
+                room_manager.broadcast(&room_id, &msg).await;
+                break;
+            }
+        }
+    }
+}
