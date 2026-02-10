@@ -52,8 +52,6 @@ export default function Roulette({ show, result, onSpin, onDone }: RouletteProps
   const [visible, setVisible] = useState(false);
   const [phase, setPhase] = useState<WheelPhase>("idle");
   const [showResult, setShowResult] = useState<number | null>(null);
-  // Latched result: once received, kept until animation completes
-  const [latchedResult, setLatchedResult] = useState<number | null>(null);
 
   const wheelRef = useRef<SVGGElement>(null);
   const angleRef = useRef(0);
@@ -75,16 +73,14 @@ export default function Roulette({ show, result, onSpin, onDone }: RouletteProps
     if (show) {
       setVisible(true);
       setShowResult(null);
-      setLatchedResult(null);
       resultRef.current = null;
       if (dismissTimer.current) clearTimeout(dismissTimer.current);
     }
   }, [show]);
 
-  // Latch result: only store, never clear from prop (cleared on dismiss)
+  // Track result prop in ref for animation loop
   useEffect(() => {
     if (result !== null) {
-      setLatchedResult(result);
       resultRef.current = result;
     }
   }, [result]);
@@ -108,7 +104,6 @@ export default function Roulette({ show, result, onSpin, onDone }: RouletteProps
     phaseRef.current = "idle";
     setPhase("idle");
     setShowResult(null);
-    setLatchedResult(null);
     resultRef.current = null;
     setVisible(false);
     onDoneRef.current?.();
@@ -192,7 +187,7 @@ export default function Roulette({ show, result, onSpin, onDone }: RouletteProps
     };
   }, []);
 
-  const canStop = phase === "spinning" && latchedResult !== null;
+  const canStop = phase === "spinning" && result !== null;
 
   return (
     <AnimatePresence>

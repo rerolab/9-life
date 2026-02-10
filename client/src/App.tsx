@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGameState } from "./hooks/useGameState";
-import type { ClientMessage, ServerMessage } from "./types/protocol";
+import { useGameSequencer } from "./hooks/useGameSequencer";
+import type { ClientMessage } from "./types/protocol";
 import Lobby from "./components/Lobby";
 import Roulette from "./components/Roulette";
 import Chat from "./components/Chat";
@@ -12,11 +13,6 @@ import PlayerInfo from "./components/PlayerInfo";
 import GameOverScreen from "./components/GameOverScreen";
 import EventToast from "./components/EventToast";
 import TurnBanner from "./components/TurnBanner";
-
-/** Message types to defer while roulette animation is playing */
-const DEFERRED_TYPES = new Set([
-  "PlayerMoved", "GameSync", "TurnChanged", "ChoiceRequired",
-]);
 
 const DEFAULT_WS_URL =
   import.meta.env.VITE_WS_URL ??
@@ -31,26 +27,7 @@ export default function App() {
   const { state, handleServerMessage, reset } = useGameState();
   const [activeTab, setActiveTab] = useState<GameTab>("board");
 
-  // Message queue: defer board-updating messages while roulette animates
-  const rouletteActiveRef = useRef(false);
-  const messageQueueRef = useRef<ServerMessage[]>([]);
-
-  const processMessage = useCallback((msg: ServerMessage) => {
-    if (rouletteActiveRef.current && DEFERRED_TYPES.has(msg.type)) {
-      messageQueueRef.current.push(msg);
-      return;
-    }
-    handleServerMessage(msg);
-  }, [handleServerMessage]);
-
-  const flushQueue = useCallback(() => {
-    rouletteActiveRef.current = false;
-    const queued = messageQueueRef.current;
-    messageQueueRef.current = [];
-    for (const msg of queued) {
-      handleServerMessage(msg);
-    }
-  }, [handleServerMessage]);
+  const { processMessage, signals } = useGameSequencer(handleServerMessage, state.myPlayerId);
 
   useEffect(() => {
     onMessage(processMessage);
@@ -141,17 +118,14 @@ export default function App() {
             <Roulette
               show={isMyTurn && state.phase === "WaitingForSpin"}
               result={state.rouletteValue}
-              onSpin={() => {
-                rouletteActiveRef.current = true;
-                handleSend({ type: "SpinRoulette" });
-              }}
-              onDone={flushQueue}
+              onSpin={() => handleSend({ type: "SpinRoulette" })}
+              onDone={signals.onRouletteComplete}
             />
 
             {/* Desktop layout */}
             <div className="game-layout desktop-only">
               <div className="game-main">
-                {state.board && <Board {...boardProps} />}
+                {state.board && <Board {...boardProps} onMoveComplete={signals.onMoveComplete} />}
               </div>
 
               <div className="game-sidebar">
@@ -185,7 +159,7 @@ export default function App() {
                       exit={{ opacity: 0, x: 20 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <Board {...boardProps} />
+                      <Board {...boardProps} onMoveComplete={signals.onMoveComplete} />
                     </motion.div>
                   )}
 
@@ -261,6 +235,7 @@ export default function App() {
                 state.playerStates.find((p) => p.id === currentPlayerId)?.name ?? null
               }
               turnChangeSignal={state.turnChangeSignal}
+              onComplete={signals.onTurnBannerComplete}
             />
 
             <EventToast
@@ -268,6 +243,7 @@ export default function App() {
               prevPositions={state.prevPlayerPositions}
               currentPlayerId={currentPlayerId}
               tiles={state.board?.tiles ?? []}
+              onDismiss={signals.onEventComplete}
             />
 
             <AnimatePresence>

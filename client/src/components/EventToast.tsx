@@ -7,6 +7,7 @@ interface EventToastProps {
   prevPositions: Record<string, number>;
   currentPlayerId: string | null;
   tiles: Tile[];
+  onDismiss?: () => void;
 }
 
 interface ToastData {
@@ -107,6 +108,7 @@ export default function EventToast({
   prevPositions,
   currentPlayerId,
   tiles,
+  onDismiss,
 }: EventToastProps) {
   const [toast, setToast] = useState<ToastData | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -134,7 +136,10 @@ export default function EventToast({
 
     if (timerRef.current) clearTimeout(timerRef.current);
     setToast(data);
-    timerRef.current = setTimeout(() => setToast(null), 3500);
+    timerRef.current = setTimeout(() => {
+      setToast(null);
+      onDismiss?.();
+    }, 3500);
   }, [playerStates, prevPositions, currentPlayerId, tiles]);
 
   return (

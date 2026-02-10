@@ -7,6 +7,7 @@ interface BoardProps {
   players: PlayerState[];
   prevPositions: Record<string, number>;
   currentPlayerId: string | null;
+  onMoveComplete?: () => void;
 }
 
 const WORLD_W = 2200;
@@ -134,6 +135,7 @@ export default function Board({
   players,
   prevPositions: _prevPositions,
   currentPlayerId,
+  onMoveComplete,
 }: BoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
@@ -482,6 +484,9 @@ export default function Board({
                 stiffness: 100,
                 damping: 15,
                 mass: 0.8,
+              }}
+              onAnimationComplete={() => {
+                if (player.id === currentPlayerId) onMoveComplete?.();
               }}
             >
               <g transform={`rotate(${carAngle})`}>

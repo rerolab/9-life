@@ -6,9 +6,9 @@ interface TurnBannerProps {
   myPlayerId: string | null;
   playerName: string | null;
   turnChangeSignal: number;
+  onComplete?: () => void;
 }
 
-const ROULETTE_WAIT = 2500;
 const DISPLAY_DURATION = 2000;
 
 export default function TurnBanner({
@@ -16,9 +16,11 @@ export default function TurnBanner({
   myPlayerId,
   playerName,
   turnChangeSignal,
+  onComplete,
 }: TurnBannerProps) {
   const [visible, setVisible] = useState(false);
-  const isFirstRef = useRef(true);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   const isMyTurn = currentPlayerId === myPlayerId;
   const text = isMyTurn ? "あなたの番！" : `${playerName ?? "???"}の番`;
@@ -26,20 +28,14 @@ export default function TurnBanner({
   useEffect(() => {
     if (turnChangeSignal === 0) return;
 
-    // No delay for the very first turn (game start)
-    const delay = isFirstRef.current ? 0 : ROULETTE_WAIT;
-    isFirstRef.current = false;
-
-    const showTimer = setTimeout(() => {
-      setVisible(true);
-    }, delay);
+    setVisible(true);
 
     const hideTimer = setTimeout(() => {
       setVisible(false);
-    }, delay + DISPLAY_DURATION);
+      onCompleteRef.current?.();
+    }, DISPLAY_DURATION);
 
     return () => {
-      clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
   }, [turnChangeSignal]);
