@@ -36,6 +36,7 @@ export interface AppState {
   careers: Career[];
   houses: House[];
   prevPlayerPositions: Record<string, number>;
+  turnChangeSignal: number;
 }
 
 const initialState: AppState = {
@@ -57,6 +58,7 @@ const initialState: AppState = {
   careers: [],
   houses: [],
   prevPlayerPositions: {},
+  turnChangeSignal: 0,
 };
 
 type Action = { type: "SERVER_MESSAGE"; msg: ServerMessage } | { type: "RESET" };
@@ -111,6 +113,7 @@ function reducer(state: AppState, action: Action): AppState {
         playerStates: msg.players,
         careers: msg.careers,
         houses: msg.houses,
+        turnChangeSignal: base.turnChangeSignal + 1,
       };
 
     case "GameSync":
@@ -129,6 +132,7 @@ function reducer(state: AppState, action: Action): AppState {
         ...base,
         currentTurn: msg.current_turn,
         rouletteValue: null,
+        turnChangeSignal: base.turnChangeSignal + 1,
       };
 
     case "RouletteResult":

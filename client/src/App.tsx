@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useGameState } from "./hooks/useGameState";
-import type { ClientMessage } from "./types/protocol";
+import type { ClientMessage, ServerMessage } from "./types/protocol";
 import Lobby from "./components/Lobby";
 import Roulette from "./components/Roulette";
 import Chat from "./components/Chat";
@@ -11,6 +11,12 @@ import Board from "./components/Board";
 import PlayerInfo from "./components/PlayerInfo";
 import GameOverScreen from "./components/GameOverScreen";
 import EventToast from "./components/EventToast";
+import TurnBanner from "./components/TurnBanner";
+
+/** Message types to defer while roulette animation is playing */
+const DEFERRED_TYPES = new Set([
+  "PlayerMoved", "GameSync", "TurnChanged", "ChoiceRequired",
+]);
 
 const DEFAULT_WS_URL =
   import.meta.env.VITE_WS_URL ??
@@ -25,11 +31,30 @@ export default function App() {
   const { state, handleServerMessage, reset } = useGameState();
   const [activeTab, setActiveTab] = useState<GameTab>("board");
 
-  useEffect(() => {
-    onMessage((msg) => {
+  // Message queue: defer board-updating messages while roulette animates
+  const rouletteActiveRef = useRef(false);
+  const messageQueueRef = useRef<ServerMessage[]>([]);
+
+  const processMessage = useCallback((msg: ServerMessage) => {
+    if (rouletteActiveRef.current && DEFERRED_TYPES.has(msg.type)) {
+      messageQueueRef.current.push(msg);
+      return;
+    }
+    handleServerMessage(msg);
+  }, [handleServerMessage]);
+
+  const flushQueue = useCallback(() => {
+    rouletteActiveRef.current = false;
+    const queued = messageQueueRef.current;
+    messageQueueRef.current = [];
+    for (const msg of queued) {
       handleServerMessage(msg);
-    });
-  }, [onMessage, handleServerMessage]);
+    }
+  }, [handleServerMessage]);
+
+  useEffect(() => {
+    onMessage(processMessage);
+  }, [onMessage, processMessage]);
 
   const handleSend = (msg: ClientMessage) => {
     if (status !== "connected") {
@@ -112,17 +137,21 @@ export default function App() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
           >
+            {/* Roulette popup overlay */}
+            <Roulette
+              show={isMyTurn && state.phase === "WaitingForSpin"}
+              result={state.rouletteValue}
+              onSpin={() => {
+                rouletteActiveRef.current = true;
+                handleSend({ type: "SpinRoulette" });
+              }}
+              onDone={flushQueue}
+            />
+
             {/* Desktop layout */}
             <div className="game-layout desktop-only">
               <div className="game-main">
                 {state.board && <Board {...boardProps} />}
-
-                <Roulette
-                  spinning={state.phase === "Spinning"}
-                  result={state.rouletteValue}
-                  onSpin={() => handleSend({ type: "SpinRoulette" })}
-                  disabled={!isMyTurn || state.phase !== "WaitingForSpin"}
-                />
               </div>
 
               <div className="game-sidebar">
@@ -146,13 +175,6 @@ export default function App() {
 
             {/* Mobile layout */}
             <div className="game-mobile mobile-only">
-              <Roulette
-                spinning={state.phase === "Spinning"}
-                result={state.rouletteValue}
-                onSpin={() => handleSend({ type: "SpinRoulette" })}
-                disabled={!isMyTurn || state.phase !== "WaitingForSpin"}
-              />
-
               <div className="mobile-tab-content">
                 <AnimatePresence mode="wait">
                   {activeTab === "board" && state.board && (
@@ -231,6 +253,15 @@ export default function App() {
                 </motion.button>
               </nav>
             </div>
+
+            <TurnBanner
+              currentPlayerId={currentPlayerId}
+              myPlayerId={state.myPlayerId}
+              playerName={
+                state.playerStates.find((p) => p.id === currentPlayerId)?.name ?? null
+              }
+              turnChangeSignal={state.turnChangeSignal}
+            />
 
             <EventToast
               playerStates={state.playerStates}
